@@ -1,43 +1,134 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZPD Police Department</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
+    <title> 警用終端機</title>
+    <style>
+        :root { --zpd-blue: #0a2463; --zpd-dark: #020612; --zpd-gold: #fbaf00; --zpd-cyan: #00ebff; }
+        body { background: var(--zpd-dark); color: white; font-family: monospace; margin: 0; text-align: center; overflow-x: hidden; }
+        
+        /* 啟動畫面 */
+        #boot-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: black; z-index: 999; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        .header { background: var(--zpd-blue); padding: 15px; border-bottom: 4px solid var(--zpd-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .gem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px; max-width: 400px; margin: auto; }
+        .gem-slot { aspect-ratio: 1; border: 1px solid #333; border-radius: 8px; background: #080808; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        
+        /* 圖片預設樣式：未解鎖時暗淡且黑白 */
+        .gem-icon { width: 80%; height: 80%; object-fit: contain; filter: grayscale(100%) brightness(15%); opacity: 0.2; transition: 0.5s; }
+        
+        /* 解鎖樣式：變回彩色且發光 */
+        .gem-slot.unlocked { border-color: var(--zpd-cyan); background: rgba(0, 235, 255, 0.1); box-shadow: inset 0 0 10px rgba(0, 235, 255, 0.3); }
+        .unlocked .gem-icon { filter: grayscale(0%) brightness(100%); opacity: 1; transform: scale(1.1); }
+
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; z-index: 100; }
+        #alert-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--zpd-blue); border: 2px solid var(--zpd-gold); padding: 20px; display: none; z-index: 101; width: 85%; max-width: 300px; border-radius: 10px; }
+        button { width: 100%; padding: 12px; background: var(--zpd-gold); border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 16px; }
+    </style>
 </head>
-<body>
-    <header>
-        <h1>ZPD Police Department</h1>
-    </header>
-    <main>
-        <div id="gem-container">
-            <img src="gem=1.png" alt="Gem 1" class="gem" />
-            <img src="gem=2.png" alt="Gem 2" class="gem" />
-            <img src="gem=3.png" alt="Gem 3" class="gem" />
-        </div>
-        <div class="slots">
-            <div class="slot" data-slot-id="1"></div>
-            <div class="slot" data-slot-id="2"></div>
-            <div class="slot" data-slot-id="3"></div>
-        </div>
-    </main>
-    <script>
-        // Restoring original functionality with localStorage
-        const slots = document.querySelectorAll('.slot');
-        const gems = document.querySelectorAll('.gem');
-        gems.forEach(gem => {
-            gem.addEventListener('click', () => {
-                // Logic to add gem to slot and store in localStorage.
-                let slotId = prompt('Enter slot number (1, 2, or 3):');
-                if (slotId >= 1 && slotId <= 3) {
-                    slots[slotId - 1].appendChild(gem.cloneNode());
-                    localStorage.setItem(`slot${slotId}`, gem.src);
-                    alert('Gem added to slot!');
-                }
-            });
+<body onclick="forceCloseBoot()">
+
+<div id="boot-screen" onclick="this.style.display='none'">
+    <p style="color:var(--zpd-cyan); font-weight: bold;">[ ZPD PDT OS V3.5 ]</p>
+    <p id="boot-msg" style="font-size: 14px;">正在驗證警員身份...</p>
+    <p style="font-size: 10px; color: #444; margin-top: 20px;">( 若畫面卡住，請點擊螢幕任何處進入 )</p>
+</div>
+
+<div class="header">
+    <div style="font-size: 10px; letter-spacing: 1px;">ZOOTOPIA POLICE DEPT.</div>
+    <b style="color:var(--zpd-gold); font-size: 18px;">聖靈寶石偵查紀錄簿</b>
+</div>
+
+<div id="progress-text" style="padding:15px; color:var(--zpd-cyan); font-weight: bold; border-bottom: 1px solid #222;">案件進度: 0%</div>
+
+<div class="gem-grid">
+    <div id="slot-1" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/?=gem1.png"></div>
+    <div id="slot-2" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/?=gem2.png"></div>
+    <div id="slot-3" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/?=gem3.png"></div>
+    <div id="slot-4" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/?=gem4.png"></div>
+    <div id="slot-5" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/?=gem5.png"></div>
+    <div id="slot-6" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/?=gem6.png"></div>
+    <div id="slot-7" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/?=gem7.png"></div>
+    <div id="slot-8" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/?=gem8.png"></div>
+    <div id="slot-9" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/?=gem9.png"></div>
+</div>
+
+<div id="overlay"></div>
+<div id="alert-box">
+    <h3 id="alert-title" style="color:var(--zpd-gold); margin-top:0;">尋獲寶石</h3>
+    <p id="alert-body" style="font-size: 14px; line-height: 1.6; color: #eee;"></p>
+    <button onclick="closeAlert()">存入警用終端機</button>
+</div>
+
+<script>
+    const gemsData = {
+        '1': { n: '喜樂', m: '靠主常存喜樂，是健康的良藥。' },
+        '2': { n: '恩慈', m: '良善的心能化解一切仇恨。' },
+        '3': { n: '節制', m: '能掌管情緒的人才是真正強者。' },
+        '4': { n: '仁愛', m: '愛是所有品格中最偉大的力量。' },
+        '5': { n: '和平', m: '使人和睦的人，必稱為神的兒子。' },
+        '6': { n: '溫柔', m: '柔和的回答能消退怒氣。' },
+        '7': { n: '忍耐', m: '在困境中學習等待，神必開路。' },
+        '8': { n: '信實', m: '誠實守信是警員最珍貴的品格。' },
+        '9': { n: '良善', m: '心存正直，行神眼中看為正的事。' }
+    };
+
+    function forceCloseBoot() {
+        const boot = document.getElementById('boot-screen');
+        if(boot) boot.style.display = 'none';
+    }
+
+    function init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const gemId = urlParams.get('gem');
+        
+        // 使用新命名空間 v8 避開舊緩存
+        let saved = JSON.parse(localStorage.getItem('zpd_final_rescue_v8') || '[]');
+
+        if (gemId && gemsData[gemId]) {
+            if (!saved.includes(gemId)) {
+                saved.push(gemId);
+                localStorage.setItem('zpd_final_rescue_v8', JSON.stringify(saved));
+            }
+            setTimeout(() => {
+                showPop(gemId);
+                forceCloseBoot();
+            }, 1000);
+        } else {
+            setTimeout(forceCloseBoot, 2000);
+        }
+        updateUI(saved);
+    }
+
+    function updateUI(saved) {
+        saved.forEach(id => {
+            const el = document.getElementById('slot-' + id);
+            if (el) el.classList.add('unlocked');
         });
-    </script>
+        document.getElementById('progress-text').innerText = "案件進度: " + Math.floor((saved.length/9)*100) + "%";
+    }
+
+    function showPop(id) {
+        document.getElementById('alert-title').innerText = "尋獲：" + gemsData[id].n + "寶石";
+        document.getElementById('alert-body').innerText = gemsData[id].m;
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('alert-box').style.display = 'block';
+    }
+
+    function closeAlert() {
+        // 重定向回不帶參數的頁面，避免刷新時重複彈窗
+        window.location.href = window.location.pathname;
+    }
+
+    window.onload = init;
+    // 5秒自動關閉黑畫面保險
+    setTimeout(forceCloseBoot, 5000); 
+</script>
+
 </body>
 </html>
