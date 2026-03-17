@@ -70,4 +70,64 @@
         '3': { name: '節制', msg: '能掌管情緒的人才是強者。' },
         '4': { name: '仁愛', msg: '愛是所有品格的基礎。' },
         '5': { name: '和平', msg: '使人和睦的人是有福的。' },
-        '6': { name: '溫柔', msg: '柔和的回答能消退怒氣。' },
+        '6': { name: '温柔', msg: '柔和的回答能消退怒氣。' },
+        '7': { name: '喜樂', msg: '心中喜樂是良藥。' },
+        '8': { name: '信實', msg: '誠實守信是警員的天職。' },
+        '9': { name: '良善', msg: '正直的人必在黑暗中見光。' }
+    };
+
+    function init() {
+        const boot = document.getElementById('boot-screen');
+        const urlParams = new URLSearchParams(window.location.search);
+        const gemId = urlParams.get('gem');
+        let saved = JSON.parse(localStorage.getItem('zpd_final_storage') || '[]');
+
+        // 1. 先處理資料邏輯
+        if (gemId && gemsInfo[gemId]) {
+            document.getElementById('boot-status').innerText = "偵測到寶石訊號...";
+            if (!saved.includes(gemId)) {
+                saved.push(gemId);
+                localStorage.setItem('zpd_final_storage', JSON.stringify(saved));
+            }
+            
+            // 2. 設定跳出寶石的時機
+            setTimeout(() => {
+                showGemAlert(gemId);
+                if(boot) boot.style.display = 'none'; // 彈窗出現時關閉黑畫面
+            }, 2000);
+        } else {
+            // 如果沒有掃描，2秒後直接進入
+            setTimeout(() => {
+                if(boot) boot.style.display = 'none';
+            }, 2000);
+        }
+
+        updateUI(saved);
+    }
+
+    function updateUI(saved) {
+        saved.forEach(id => {
+            const slot = document.getElementById('slot-' + id);
+            if (slot) slot.classList.add('unlocked');
+        });
+        document.getElementById('progress-text').innerText = "案件進度: " + Math.floor((saved.length / 9) * 100) + "%";
+    }
+
+    function showGemAlert(id) {
+        document.getElementById('alert-title').innerText = "尋獲：" + gemsInfo[id].name + "寶石";
+        document.getElementById('alert-body').innerText = gemsInfo[id].msg;
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('alert-box').style.display = 'block';
+    }
+
+    function closeAlert() {
+        // 清除網址參數，回歸乾淨頁面
+        window.location.href = window.location.pathname;
+    }
+
+    // 啟動！
+    window.onload = init;
+</script>
+
+</body>
+</html>
