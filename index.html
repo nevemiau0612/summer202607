@@ -5,217 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZPD 警用終端機</title>
     <style>
-        :root { 
-            --zpd-blue: #0a2463; 
-            --zpd-gold: #fbaf00; 
-            --zpd-cyan: #00ebff; 
-            --zpd-bg: #020612;
-        }
+        :root { --zpd-blue: #0a2463; --zpd-dark: #020612; --zpd-gold: #fbaf00; --zpd-cyan: #00ebff; }
+        body { background: var(--zpd-dark); color: white; font-family: monospace; margin: 0; text-align: center; overflow-x: hidden; }
         
-        body { 
-            background: var(--zpd-bg); 
-            color: white; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            text-align: center; 
-            overflow-x: hidden;
-        }
-
-        /* 啟動黑畫面：點擊即可強制進入 */
+        /* 啟動畫面 - 增加點擊關閉功能 */
         #boot-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: black; z-index: 999; display: flex; align-items: center; 
-            justify-content: center; flex-direction: column; cursor: pointer;
+            background: black; z-index: 999; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; cursor: pointer;
         }
 
-        .header { 
-            background: var(--zpd-blue); 
-            padding: 15px; 
-            border-bottom: 4px solid var(--zpd-gold); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-
-        .status-panel {
-            padding: 15px;
-            background: rgba(0, 235, 255, 0.05);
-            border-bottom: 1px solid #1a1a1a;
-        }
-
-        /* 寶石網格佈局 */
-        .gem-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 12px; 
-            padding: 20px; 
-            max-width: 400px; 
-            margin: auto; 
-        }
-
-        .gem-slot { 
-            aspect-ratio: 1; 
-            border: 2px solid #333; 
-            border-radius: 12px; 
-            background: #080808; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            overflow: hidden;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        .header { background: var(--zpd-blue); padding: 15px; border-bottom: 4px solid var(--zpd-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .gem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px; max-width: 400px; margin: auto; }
+        .gem-slot { aspect-ratio: 1; border: 1px solid #333; border-radius: 8px; background: #080808; display: flex; align-items: center; justify-content: center; }
         
-        /* 圖片預設：灰暗 */
-        .gem-icon { 
-            width: 80%; 
-            height: 80%; 
-            object-fit: contain; 
-            filter: grayscale(100%) brightness(20%); 
-            opacity: 0.2; 
-        }
-        
-        /* 解鎖樣式：發光彩色 */
-        .gem-slot.unlocked { 
-            border-color: var(--zpd-cyan); 
-            background: rgba(0, 235, 255, 0.1);
-            box-shadow: 0 0 15px rgba(0, 235, 255, 0.3);
-        }
+        .gem-slot.unlocked { border-color: var(--zpd-cyan); background: rgba(0, 235, 255, 0.1); box-shadow: inset 0 0 10px rgba(0, 235, 255, 0.2); }
+        .gem-icon { width: 60%; filter: grayscale(100%) brightness(20%); opacity: 0.3; transition: 0.5s; }
+        .unlocked .gem-icon { filter: grayscale(0%) brightness(100%); opacity: 1; transform: scale(1.1); }
 
-        .unlocked .gem-icon { 
-            filter: grayscale(0%) brightness(100%); 
-            opacity: 1; 
-            transform: scale(1.1); 
-        }
-
-        /* 領取寶石彈窗 */
-        #overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.85); display: none; z-index: 100; 
-            backdrop-filter: blur(4px);
-        }
-
-        #alert-box { 
-            position: fixed; top: 50%; left: 50%; 
-            transform: translate(-50%, -50%); 
-            background: var(--zpd-blue); 
-            border: 2px solid var(--zpd-gold); 
-            padding: 25px; 
-            display: none; 
-            z-index: 101; 
-            width: 80%; 
-            max-width: 320px; 
-            border-radius: 20px;
-        }
-
-        .btn-save { 
-            background: var(--zpd-gold); 
-            color: var(--zpd-blue); 
-            border: none; 
-            padding: 12px; 
-            width: 100%; 
-            font-weight: bold; 
-            border-radius: 8px; 
-            margin-top: 15px; 
-            font-size: 16px;
-            cursor: pointer;
-        }
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; z-index: 100; }
+        #alert-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--zpd-blue); border: 2px solid var(--zpd-gold); padding: 20px; display: none; z-index: 101; width: 85%; max-width: 300px; border-radius: 10px; }
     </style>
 </head>
-<body onclick="hideBoot()">
+<body onclick="forceCloseBoot()">
 
-<div id="boot-screen">
-    <div style="color:var(--zpd-cyan); font-family: monospace; margin-bottom: 10px;">>> SYSTEM_LOADING...</div>
-    <h2 style="margin:0; color:white;">警局 偵查終端</h2>
-    <p style="font-size: 12px; color: #555; margin-top: 20px;">點擊螢幕驗證身份</p>
+<div id="boot-screen" onclick="this.style.display='none'">
+    <p style="color:var(--zpd-cyan); font-weight: bold;">[ ZPD PDT OS V3.0 ]</p>
+    <p id="boot-msg" style="font-size: 14px;">系統啟動中...</p>
+    <p style="font-size: 10px; color: #555; margin-top: 20px;">( 若畫面卡住，請點擊螢幕任何處進入 )</p>
 </div>
 
 <div class="header">
-    <div style="font-size: 10px; letter-spacing: 2px; opacity: 0.7;">ZOOTOPIA POLICE DEPT.</div>
-    <b style="color:var(--zpd-gold); font-size: 20px;">聖靈寶石紀錄簿</b>
+    <div style="font-size: 10px; letter-spacing: 1px;">ZOOTOPIA POLICE DEPT.</div>
+    <b style="color:var(--zpd-gold); font-size: 18px;">聖靈寶石偵查紀錄簿</b>
 </div>
 
-<div class="status-panel">
-    <div style="font-size: 12px; color: var(--zpd-cyan);">案件偵破進度</div>
-    <div id="prog-text" style="font-size: 28px; font-weight: bold;">0%</div>
-</div>
+<div id="progress-text" style="padding:15px; color:var(--zpd-cyan); font-weight: bold; border-bottom: 1px solid #222;">案件進度: 0%</div>
 
 <div class="gem-grid">
-    <div id="slot-1" class="gem-slot"><img class="gem-icon" src="images/gem1.png"></div>
-    <div id="slot-2" class="gem-slot"><img class="gem-icon" src="images/gem2.png"></div>
-    <div id="slot-3" class="gem-slot"><img class="gem-icon" src="images/gem3.png"></div>
-    <div id="slot-4" class="gem-slot"><img class="gem-icon" src="images/gem4.png"></div>
-    <div id="slot-5" class="gem-slot"><img class="gem-icon" src="images/gem5.png"></div>
-    <div id="slot-6" class="gem-slot"><img class="gem-icon" src="images/gem6.png"></div>
-    <div id="slot-7" class="gem-slot"><img class="gem-icon" src="images/gem7.png"></div>
-    <div id="slot-8" class="gem-slot"><img class="gem-icon" src="images/gem8.png"></div>
-    <div id="slot-9" class="gem-slot"><img class="gem-icon" src="images/gem9.png"></div>
+    <div id="slot-1" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3209/3209565.png"></div>
+    <div id="slot-2" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/2904/2904918.png"></div>
+    <div id="slot-3" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3209/3209630.png"></div>
+    <div id="slot-4" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/2107/2107845.png"></div>
+    <div id="slot-5" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/2913/2913455.png"></div>
+    <div id="slot-6" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3209/3209618.png"></div>
+    <div id="slot-7" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/1041/1041916.png"></div>
+    <div id="slot-8" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png"></div>
+    <div id="slot-9" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/1152/1152912.png"></div>
 </div>
 
 <div id="overlay"></div>
 <div id="alert-box">
-    <h3 id="atitle" style="color:var(--zpd-gold); margin-top:0;">尋獲證據</h3>
-    <p id="amsg" style="color:#eee; font-size:14px; line-height:1.6;"></p>
-    <button class="btn-save" onclick="confirmGem()">收錄至終端機</button>
+    <h3 id="alert-title" style="color:var(--zpd-gold); margin-top:0;">尋獲寶石</h3>
+    <p id="alert-body" style="font-size: 14px; line-height: 1.6; color: #eee;"></p>
+    <button onclick="closeAlert()" style="width:100%; padding:12px; background:var(--zpd-gold); border:none; border-radius:5px; font-weight:bold; cursor:pointer;">存入系統資料庫</button>
 </div>
 
 <script>
-    const gemData = {
-        '1':['忍耐','在困難中不輕易放棄，神必開路。'], 
-        '2':['恩慈','用善良的心待人，化解一切仇恨。'],
-        '3':['節制','學會控制自己的情緒，才是強者。'], 
-        '4':['仁愛','愛是恆久忍耐，又有恩慈。'],
-        '5':['和平','使人和睦的人，必稱為神的兒子。'], 
-        '6':['溫柔','柔和的回答能消退怒氣。'],
-        '7':['喜樂','在主裡常存歡喜的心，是強大藥石。'], 
-        '8':['信實','誠實守信，是警員最高的人格標誌。'],
-        '9':['良善','心存正直，行神眼中看為正的事。']
+    const gemsData = {
+        '1': { n: '喜樂', m: '靠主常存喜樂，是健康的良藥。' },
+        '2': { n: '恩慈', m: '良善的心能化解一切仇恨。' },
+        '3': { n: '節制', m: '能掌管情緒的人才是真正強者。' },
+        '4': { n: '仁愛', m: '愛是所有品格中最偉大的力量。' },
+        '5': { n: '和平', m: '使人和睦的人，必稱為神的兒子。' },
+        '6': { n: '溫柔', m: '柔和的回答能消退怒氣。' },
+        '7': { n: '忍耐', m: '在困境中學習等待，神必開路。。' },
+        '8': { n: '信實', m: '誠實守信是警員最珍貴的品格。' },
+        '9': { n: '良善', m: '心存正直，行神眼中看為正的事。' }
     };
 
-    function hideBoot() {
+    function forceCloseBoot() {
         const boot = document.getElementById('boot-screen');
         if(boot) boot.style.display = 'none';
     }
 
     function init() {
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('gem');
-        
-        // 每次大改版建議換一個儲存名稱 (如 v7) 確保避開舊錯誤
-        let saved = JSON.parse(localStorage.getItem('zpd_storage_v7') || '[]');
+        const urlParams = new URLSearchParams(window.location.search);
+        const gemId = urlParams.get('gem');
+        let saved = JSON.parse(localStorage.getItem('zpd_final_9_gems') || '[]');
 
-        if (id && gemData[id]) {
-            if (!saved.includes(id)) {
-                saved.push(id);
-                localStorage.setItem('zpd_storage_v7', JSON.stringify(saved));
+        if (gemId && gemsData[gemId]) {
+            document.getElementById('boot-msg').innerText = "偵測到寶石脈衝...";
+            if (!saved.includes(gemId)) {
+                saved.push(gemId);
+                localStorage.setItem('zpd_final_9_gems', JSON.stringify(saved));
             }
-            // 觸發彈窗
             setTimeout(() => {
-                document.getElementById('atitle').innerText = "尋獲 " + gemData[id][0] + " 寶石！";
-                document.getElementById('amsg').innerText = gemData[id][1];
-                document.getElementById('overlay').style.display = 'block';
-                document.getElementById('alert-box').style.display = 'block';
-                hideBoot(); // 彈窗出現時強迫關閉啟動畫面
-            }, 1500);
+                showPop(gemId);
+                forceCloseBoot();
+            }, 1800);
         } else {
-            // 一般開啟，2秒後自動進入
-            setTimeout(hideBoot, 2000);
+            setTimeout(forceCloseBoot, 2000);
         }
-
         updateUI(saved);
     }
 
-    function updateUI(arr) {
-        arr.forEach(i => {
-            const el = document.getElementById('slot-' + i);
-            if(el) el.classList.add('unlocked');
+    function updateUI(saved) {
+        saved.forEach(id => {
+            const el = document.getElementById('slot-' + id);
+            if (el) el.classList.add('unlocked');
         });
-        document.getElementById('prog-text').innerText = Math.floor((arr.length/9)*100) + "%";
+        document.getElementById('progress-text').innerText = "案件進度: " + Math.floor((saved.length/9)*100) + "%";
     }
 
-    function confirmGem() {
-        // 清除網址參數回到主頁，防止重複觸發彈窗
+    function showPop(id) {
+        document.getElementById('alert-title').innerText = "尋獲：" + gemsData[id].n + "寶石";
+        document.getElementById('alert-body').innerText = gemsData[id].m;
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('alert-box').style.display = 'block';
+    }
+
+    function closeAlert() {
+        // 重定向到不帶參數的網址，避免重複跳出
         window.location.href = window.location.pathname;
     }
 
+    // 啟動，並增加 5 秒強制保險
     window.onload = init;
+    setTimeout(forceCloseBoot, 5000); 
 </script>
+
 </body>
 </html>
