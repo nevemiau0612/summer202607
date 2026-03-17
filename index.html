@@ -3,23 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Improved Web Page</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Zootopia Police Department</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .alert-box {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid transparent;
+            border-radius: 5px;
+            position: relative;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <h1>Welcome to the Improved Web Page</h1>
+        <h1>Welcome to Zootopia Police Department</h1>
     </header>
     <main>
-        <section>
-            <h2>Image Gallery</h2>
-            <p>Here are some images:</p>
-            <img src="gem=1.png" alt="Description of gem image" onerror="this.onerror=null; this.src='fallback.png';">
-            <img src="gem=2.png" alt="Description of second gem image" onerror="this.onerror=null; this.src='fallback.png';">
-        </section>
+        <div class="alert-box">
+            <strong>Alert!</strong> Check your scanning process for errors.
+        </div>
+        <img src="gem=1.png" alt="Gem 1 image" onerror="this.style.display='none';">
+        <img src="gem=2.png" alt="Gem 2 image" onerror="this.style.display='none';">
+        <img src="gem=3.png" alt="Gem 3 image" onerror="this.style.display='none';">
+
+        <script>
+            const checkImages = () => {
+                const gems = ["gem=1.png", "gem=2.png", "gem=3.png"];
+                gems.forEach((gem, index) => {
+                    const img = new Image();
+                    img.src = gem;
+                    img.onload = () => { /* Handle successful load */ };
+                    img.onerror = () => {
+                        console.error('Error loading image:', gem);
+                        // Error handling code
+                    };
+                });
+            };
+            checkImages();
+            if (!localStorage.getItem('gems')) {
+                console.error('No gems found in localStorage.');
+            }
+        </script>
     </main>
     <footer>
-        <p>&copy; 2026 Improved Web Page</p>
+        <p>&copy; 2026 Zootopia Police Department. All rights reserved.</p>
     </footer>
 </body>
 </html>
