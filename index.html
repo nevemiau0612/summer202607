@@ -1,23 +1,73 @@
-function init() {
-    const urlParams = new URLSearchParams(window.location.search);
-    // 確保這裡抓的是 'gem'
-    const gemId = urlParams.get('gem'); 
-    let saved = JSON.parse(localStorage.getItem('zpd_9gems') || '[]');
-
-    if (gemId && gems[gemId]) {
-        // 如果網址有 ?gem=1，強制進入開機流程並跳出寶石
-        document.getElementById('boot-screen').style.display = 'flex'; 
-        if (!saved.includes(gemId)) {
-            saved.push(gemId);
-            localStorage.setItem('zpd_9gems', JSON.stringify(saved));
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZPD 警用終端機</title>
+    <style>
+        :root { --zpd-blue: #0a2463; --zpd-dark: #020612; --zpd-gold: #fbaf00; --zpd-cyan: #00ebff; }
+        body { background: var(--zpd-dark); color: white; font-family: monospace; margin: 0; text-align: center; }
+        
+        /* 啟動畫面 */
+        #boot-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: black; z-index: 999; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; 
         }
-        setTimeout(() => { showAlert(gemId, true); }, 2500); 
-    } else {
-        // 如果網址沒有參數，2秒後自動關閉開機畫面顯示紀錄簿
-        setTimeout(() => { 
-            const boot = document.getElementById('boot-screen');
-            if(boot) boot.style.display = 'none'; 
-        }, 2000);
-    }
-    updateUI(saved);
-}
+
+        .header { background: var(--zpd-blue); padding: 15px; border-bottom: 4px solid var(--zpd-gold); }
+        .gem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 20px; max-width: 400px; margin: auto; }
+        .gem-slot { aspect-ratio: 1; border: 1px solid #333; border-radius: 8px; background: #080808; display: flex; align-items: center; justify-content: center; position: relative; }
+        
+        /* 已解鎖樣式 */
+        .gem-slot.unlocked { border-color: var(--zpd-cyan); background: rgba(0, 235, 255, 0.1); }
+        .gem-icon { width: 60%; filter: grayscale(100%) brightness(20%); opacity: 0.3; }
+        .unlocked .gem-icon { filter: grayscale(0%) brightness(100%); opacity: 1; }
+
+        /* 彈出視窗 */
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; z-index: 100; }
+        #alert-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--zpd-blue); border: 2px solid var(--zpd-gold); padding: 20px; display: none; z-index: 101; width: 80%; max-width: 300px; border-radius: 10px; }
+        .btn-confirm { background: var(--zpd-gold); color: var(--zpd-blue); border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div id="boot-screen">
+    <p style="color:var(--zpd-cyan)">>> ZPD_PDT_OS_V2.5</p>
+    <p id="boot-status">系統啟動中...</p>
+</div>
+
+<div class="header">
+    <div style="font-size: 12px; color: rgba(255,255,255,0.7);">ZOOTOPIA POLICE DEPT.</div>
+    <b style="color:var(--zpd-gold); font-size: 20px;">聖靈寶石紀錄簿</b>
+</div>
+
+<div id="progress-text" style="padding:15px; color:var(--zpd-cyan); font-weight: bold;">案件進度: 0%</div>
+
+<div class="gem-grid" id="main-grid">
+    <div id="slot-1" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3209/3209565.png"></div>
+    <div id="slot-2" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/2904/2904918.png"></div>
+    <div id="slot-3" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3209/3209630.png"></div>
+    <div id="slot-4" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/2107/2107845.png"></div>
+    <div id="slot-5" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/2913/2913455.png"></div>
+    <div id="slot-6" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3209/3209618.png"></div>
+    <div id="slot-7" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/1041/1041916.png"></div>
+    <div id="slot-8" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png"></div>
+    <div id="slot-9" class="gem-slot"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/1152/1152912.png"></div>
+</div>
+
+<div id="overlay"></div>
+<div id="alert-box">
+    <h3 id="alert-title" style="color:var(--zpd-gold); margin-top:0;">發現證據</h3>
+    <p id="alert-body" style="font-size: 14px; line-height: 1.6; color: #eee;"></p>
+    <button class="btn-confirm" onclick="closeAlert()">存入警用終端機</button>
+</div>
+
+<script>
+    const gemsInfo = {
+        '1': { name: '忍耐', msg: '約瑟在困境中學習等待。' },
+        '2': { name: '恩慈', msg: '良善的心能化解一切仇恨。' },
+        '3': { name: '節制', msg: '能掌管情緒的人才是強者。' },
+        '4': { name: '仁愛', msg: '愛是所有品格的基礎。' },
+        '5': { name: '和平', msg: '使人和睦的人是有福的。' },
+        '6': { name: '溫柔', msg: '柔和的回答能消退怒氣。' },
