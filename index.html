@@ -1,133 +1,23 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZPD 警用終端機 - 完整九寶石紀錄</title>
-    <style>
-        :root { --zpd-blue: #0a2463; --zpd-dark: #020612; --zpd-gold: #fbaf00; --zpd-cyan: #00ebff; }
-        body { background: var(--zpd-dark); color: white; font-family: 'Courier New', Courier, monospace; margin: 0; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
-        
-        /* 啟動動畫 */
-        #boot-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .boot-text { color: var(--zpd-cyan); font-size: 14px; margin: 5px; opacity: 0; animation: fadeIn 0.5s forwards; }
-        @keyframes fadeIn { to { opacity: 1; } }
+function init() {
+    const urlParams = new URLSearchParams(window.location.search);
+    // 確保這裡抓的是 'gem'
+    const gemId = urlParams.get('gem'); 
+    let saved = JSON.parse(localStorage.getItem('zpd_9gems') || '[]');
 
-        /* 主導航 */
-        .header { background: var(--zpd-blue); width: 100%; padding: 12px; text-align: center; border-bottom: 4px solid var(--zpd-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.8); position: sticky; top: 0; z-index: 100; }
-        .zpd-logo { font-size: 20px; font-weight: bold; color: var(--zpd-gold); letter-spacing: 2px; }
-        
-        .pdt-container { width: 92%; max-width: 450px; margin-top: 20px; padding-bottom: 40px; }
-        
-        /* 狀態列 */
-        .officer-banner { background: rgba(0, 235, 255, 0.05); border-left: 4px solid var(--zpd-cyan); padding: 12px; margin-bottom: 20px; }
-        .status-title { color: #888; font-size: 11px; margin-bottom: 8px; }
-        .progress-bar-bg { background: #111; height: 14px; border-radius: 7px; overflow: hidden; position: relative; border: 1px solid #333; }
-        .progress-bar-fill { background: linear-gradient(90deg, #0051ff, var(--zpd-cyan)); height: 100%; width: 0%; transition: width 1s ease-in-out; }
-        .progress-text { position: absolute; right: 10px; top: 0px; font-size: 10px; color: white; font-weight: bold; line-height: 14px; }
-
-        /* 九宮格紀錄簿 */
-        .log-section { background: rgba(255,255,255,0.02); border: 1px solid #222; border-radius: 12px; padding: 15px; }
-        .log-header { color: var(--zpd-gold); font-size: 14px; font-weight: bold; margin-bottom: 15px; text-align: center; border-bottom: 1px solid #333; padding-bottom: 8px; }
-        
-        .gem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .gem-slot { aspect-ratio: 1; border: 1px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #080808; transition: 0.3s; position: relative; }
-        .gem-slot.unlocked { border-color: var(--zpd-cyan); box-shadow: inset 0 0 10px rgba(0, 235, 255, 0.1); }
-        .gem-icon { width: 60%; filter: grayscale(100%) brightness(15%); opacity: 0.3; transition: 0.6s; }
-        .unlocked .gem-icon { filter: grayscale(0%) brightness(100%); opacity: 1; transform: scale(1.1); }
-
-        /* 彈窗 */
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; z-index: 150; backdrop-filter: blur(5px); }
-        .alert-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #051435; border: 1px solid var(--zpd-gold); color: white; padding: 25px; border-radius: 5px; text-align: center; display: none; z-index: 160; width: 80%; max-width: 300px; }
-        .alert-gem-img { width: 100px; height: 100px; margin: 15px 0; filter: drop-shadow(0 0 8px var(--zpd-gold)); }
-        .btn-confirm { background: var(--zpd-gold); color: var(--zpd-blue); border: none; padding: 12px; border-radius: 2px; font-weight: bold; cursor: pointer; margin-top: 20px; width: 100%; }
-    </style>
-</head>
-<body>
-
-<div id="boot-screen">
-    <div class="boot-text" style="animation-delay: 0.2s">>> ZPD_PDT_OS V2.2 BOOTING...</div>
-    <div class="boot-text" style="animation-delay: 0.8s">>> 正在檢索聖靈谷失竊寶石信號...</div>
-    <div class="boot-text" style="animation-delay: 1.5s; color: var(--zpd-gold)">>> 偵查終端已就緒，學員請開始辦案。</div>
-</div>
-
-<div class="header">
-    <div class="zpd-logo">ZPD 聖靈寶石紀錄簿</div>
-</div>
-
-<div class="pdt-container">
-    <div class="officer-banner">
-        <div class="status-title">RECOVERY PROGRESS / 尋回進度</div>
-        <div class="progress-bar-bg">
-            <div id="progress-bar" class="progress-bar-fill"></div>
-            <div id="progress-text" class="progress-text">0%</div>
-        </div>
-    </div>
-
-    <div class="log-section">
-        <div class="log-header">九大寶石收藏匣</div>
-        <div class="gem-grid">
-            <div id="slot-1" class="gem-slot" onclick="showGemLog('1')"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3209/3209565.png"></div>
-            <div id="slot-2" class="gem-slot" onclick="showGemLog('2')"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/2904/2904918.png"></div>
-            <div id="slot-3" class="gem-slot" onclick="showGemLog('3')"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3209/3209630.png"></div>
-            <div id="slot-4" class="gem-slot" onclick="showGemLog('4')"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/2107/2107845.png"></div>
-            <div id="slot-5" class="gem-slot" onclick="showGemLog('5')"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/2913/2913455.png"></div>
-            <div id="slot-6" class="gem-slot" onclick="showGemLog('6')"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3209/3209618.png"></div>
-            <div id="slot-7" class="gem-slot" onclick="showGemLog('7')"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/1041/1041916.png"></div>
-            <div id="slot-8" class="gem-slot" onclick="showGemLog('8')"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png"></div>
-            <div id="slot-9" class="gem-slot" onclick="showGemLog('9')"><img class="gem-icon" src="https://cdn-icons-png.flaticon.com/512/1152/1152912.png"></div>
-        </div>
-    </div>
-</div>
-
-<div class="overlay" id="overlay" onclick="closeAlert()"></div>
-<div class="alert-box" id="alert-box">
-    <h2 id="alert-title" style="margin: 0; color: var(--zpd-gold);">發現寶石</h2>
-    <img id="alert-image" class="alert-gem-img" src="" alt="寶石">
-    <div style="padding-top: 15px; font-size: 14px; border-top: 1px solid #1a3a5a;">
-        <span id="alert-body" style="color: #ccc;"></span>
-    </div>
-    <button class="btn-confirm" onclick="closeAlert()">確認存入終端機</button>
-</div>
-
-<script>
-    // 定義 9 個寶石的內容
-    const gems = {
-        '1': { name: '忍耐寶石', msg: '在艱難中等待，預備迎接神更好的安排。', img: 'https://cdn-icons-png.flaticon.com/512/3209/3209565.png' },
-        '2': { name: '恩慈寶石', msg: '以良善待人，像約瑟寬恕他的兄弟。', img: 'https://cdn-icons-png.flaticon.com/512/2904/2904918.png' },
-        '3': { name: '節制寶石', msg: '能管住自己的心，才是真正的勇士。', img: 'https://cdn-icons-png.flaticon.com/512/3209/3209630.png' },
-        '4': { name: '仁愛寶石', msg: '愛是恆久忍耐，又有恩慈。', img: 'https://cdn-icons-png.flaticon.com/512/2107/2107845.png' },
-        '5': { name: '和平寶石', msg: '使人和睦的人有福了，因為他們必稱為神的兒子。', img: 'https://cdn-icons-png.flaticon.com/512/2913/2913455.png' },
-        '6': { name: '溫柔寶石', msg: '溫柔的心能平息紛爭，化解冰凍。', img: 'https://cdn-icons-png.flaticon.com/512/3209/3209618.png' },
-        '7': { name: '喜樂寶石', msg: '在任何環境中，都要靠主常存歡喜的心。', img: 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png' },
-        '8': { name: '信實寶石', msg: '誠實守信，是警員最珍貴的品格。', img: 'https://cdn-icons-png.flaticon.com/512/3135/3135706.png' },
-        '9': { name: '良善寶石', msg: '心存正直，行神眼中看為正的事。', img: 'https://cdn-icons-png.flaticon.com/512/1152/1152912.png' }
-    };
-
-    let isScanning = false;
-
-    function init() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const gemId = urlParams.get('gem');
-        let saved = JSON.parse(localStorage.getItem('zpd_9gems') || '[]');
-
-        if (gemId && gems[gemId]) {
-            isScanning = true;
-            if (!saved.includes(gemId)) {
-                saved.push(gemId);
-                localStorage.setItem('zpd_9gems', JSON.stringify(saved));
-            }
-            setTimeout(() => { showAlert(gemId, true); }, 2500); 
-        } else {
-            setTimeout(() => { document.getElementById('boot-screen').style.display = 'none'; }, 2000);
+    if (gemId && gems[gemId]) {
+        // 如果網址有 ?gem=1，強制進入開機流程並跳出寶石
+        document.getElementById('boot-screen').style.display = 'flex'; 
+        if (!saved.includes(gemId)) {
+            saved.push(gemId);
+            localStorage.setItem('zpd_9gems', JSON.stringify(saved));
         }
-        updateUI(saved);
+        setTimeout(() => { showAlert(gemId, true); }, 2500); 
+    } else {
+        // 如果網址沒有參數，2秒後自動關閉開機畫面顯示紀錄簿
+        setTimeout(() => { 
+            const boot = document.getElementById('boot-screen');
+            if(boot) boot.style.display = 'none'; 
+        }, 2000);
     }
-
-    function updateUI(saved) {
-        saved.forEach(id => {
-            const slot = document.getElementById('slot-' + id);
-            if (slot) slot.classList.add('unlocked');
-        });
-        const total = Object.keys(gems).length;
-        const percent = Math.floor((saved.length / total) * 100);
+    updateUI(saved);
+}
