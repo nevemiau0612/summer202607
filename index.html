@@ -40,4 +40,63 @@
 <div id="progress-text" style="padding:15px; color:var(--zpd-cyan); font-weight: bold; border-bottom: 1px solid #1a1a1a;">案件偵破進度: 0%</div>
 
 <div class="gem-grid">
-    <div id="slot-1" class="gem-slot"><img class="gem-icon" src="
+    <div id="slot-1" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem1.jpg"></div>
+    <div id="slot-2" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem2.jpg"></div>
+    <div id="slot-3" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem3.jpg"></div>
+    <div id="slot-4" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem4.jpg"></div>
+    <div id="slot-5" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem5.jpg"></div>
+    <div id="slot-6" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem6.jpg"></div>
+    <div id="slot-7" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem7.jpg"></div>
+    <div id="slot-8" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem8.jpg"></div>
+    <div id="slot-9" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem9.jpg"></div>
+</div>
+
+<div id="overlay"></div>
+<div id="alert-box">
+    <h3 id="atitle" style="color:var(--zpd-gold); margin-top:0;">尋獲寶石</h3>
+    <p id="amsg" style="font-size: 14px; line-height: 1.6; color: #eee;"></p>
+    <button onclick="window.location.href=window.location.pathname">確認存入系統</button>
+</div>
+
+<script>
+    const gData = {
+        '1':['喜樂','靠主常存喜樂，是健康的良藥。'], '2':['恩慈','良善的心能化解一切仇恨。'],
+        '3':['節制','能掌管情緒的人才是真正強者。'], '4':['仁愛','愛是所有品格中最偉大的力量。'],
+        '5':['和平','使人和睦的人，必稱為神的兒子。'], '6':['溫柔','柔和的回答能消退怒氣。'],
+        '7':['忍耐','在困境中學習等待，神必開路。'], '8':['信實','誠實守信是警員最珍貴的品格。'],
+        '9':['良善','心存正直，行神眼中看為正的事。']
+    };
+
+    function init() {
+        const p = new URLSearchParams(window.location.search);
+        const id = p.get('gem');
+        
+        // 變更儲存 Key 確保強制重整
+        let s = JSON.parse(localStorage.getItem('zpd_storage_final_jpg') || '[]');
+
+        if (id && gData[id]) {
+            if (!s.includes(id)) {
+                s.push(id);
+                localStorage.setItem('zpd_storage_final_jpg', JSON.stringify(s));
+            }
+            setTimeout(() => {
+                document.getElementById('atitle').innerText = "尋獲：" + gData[id][0];
+                document.getElementById('amsg').innerText = gData[id][1];
+                document.getElementById('overlay').style.display = 'block';
+                document.getElementById('alert-box').style.display = 'block';
+                document.getElementById('boot-screen').style.display = 'none';
+            }, 1200);
+        } else {
+            setTimeout(() => document.getElementById('boot-screen').style.display='none', 2000);
+        }
+        
+        s.forEach(i => {
+            const el = document.getElementById('slot-' + i);
+            if(el) el.classList.add('unlocked');
+        });
+        document.getElementById('progress-text').innerText = "案件偵破進度: " + Math.floor((s.length/9)*100) + "%";
+    }
+    window.onload = init;
+</script>
+</body>
+</html>
