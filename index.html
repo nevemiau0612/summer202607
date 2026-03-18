@@ -8,14 +8,13 @@
         :root { --zpd-blue: #0a2463; --zpd-dark: #020612; --zpd-gold: #fbaf00; --zpd-cyan: #00ebff; }
         body { background: var(--zpd-dark); color: white; font-family: monospace; margin: 0; text-align: center; overflow-x: hidden; }
         
-        /* --- 啟動畫面字體加大版 --- */
+        /* 啟動畫面 */
         #boot-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: black; z-index: 999; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; cursor: pointer;
         }
 
-        /* 標題：加大至 28px 並加強發光感 */
         #boot-title { 
             color: var(--zpd-cyan); 
             font-size: 28px; 
@@ -25,21 +24,8 @@
             text-shadow: 0 0 10px rgba(0, 235, 255, 0.5);
         }
 
-        /* 狀態文字：加大至 18px */
-        #boot-msg { 
-            font-size: 18px; 
-            color: #ccc;
-            margin: 10px 0;
-        }
-
-        /* 底部提示：加大至 14px */
-        #boot-hint { 
-            font-size: 14px; 
-            color: #666; 
-            margin-top: 40px; 
-            border: 1px solid #333;
-            padding: 5px 15px;
-        }
+        #boot-msg { font-size: 18px; color: #ccc; margin: 10px 0; }
+        #boot-hint { font-size: 14px; color: #666; margin-top: 40px; border: 1px solid #333; padding: 5px 15px; }
 
         .header { background: var(--zpd-blue); padding: 15px; border-bottom: 4px solid var(--zpd-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .gem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px; max-width: 400px; margin: auto; }
@@ -86,69 +72,4 @@
 <div id="alert-box">
     <h3 id="alert-title" style="color:var(--zpd-gold); margin-top:0;">尋獲寶石</h3>
     <p id="alert-body" style="font-size: 14px; line-height: 1.6; color: #eee;"></p>
-    <button onclick="closeAlert()">存入警用終端機</button>
-</div>
-
-<script>
-    const gemsData = {
-        '1': { n: '喜樂', m: '靠主常存喜樂，是健康的良藥。' },
-        '2': { n: '恩慈', m: '良善的心能化解一切仇恨。' },
-        '3': { n: '節制', m: '能掌管情緒的人才是真正強者。' },
-        '4': { n: '仁愛', m: '愛是所有品格中最偉大的力量。' },
-        '5': { n: '和平', m: '使人和睦的人，必稱為神的兒子。' },
-        '6': { n: '溫柔', m: '柔和的回答能消退怒氣。' },
-        '7': { n: '忍耐', m: '在困境中學習等待，神必開路。' },
-        '8': { n: '信實', m: '誠實守信是警員最珍貴的品格。' },
-        '9': { n: '良善', m: '心存正直，行神眼中看為正的事。' }
-    };
-
-    function forceCloseBoot() {
-        const boot = document.getElementById('boot-screen');
-        if(boot) boot.style.display = 'none';
-    }
-
-    function init() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const gemId = urlParams.get('gem');
-        
-        let saved = JSON.parse(localStorage.getItem('zpd_final_rescue_v8') || '[]');
-
-        if (gemId && gemsData[gemId]) {
-            if (!saved.includes(gemId)) {
-                saved.push(gemId);
-                localStorage.setItem('zpd_final_rescue_v8', JSON.stringify(saved));
-            }
-            setTimeout(() => {
-                showPop(gemId);
-                forceCloseBoot();
-            }, 800);
-        } else {
-            setTimeout(forceCloseBoot, 1500);
-        }
-        updateUI(saved);
-    }
-
-    function updateUI(saved) {
-        saved.forEach(id => {
-            const el = document.getElementById('slot-' + id);
-            if (el) el.classList.add('unlocked');
-        });
-        document.getElementById('progress-text').innerText = "案件進度: " + Math.floor((saved.length/9)*100) + "%";
-    }
-
-    function showPop(id) {
-        document.getElementById('alert-title').innerText = "尋獲：" + gemsData[id].n + "寶石";
-        document.getElementById('alert-body').innerText = gemsData[id].m;
-        document.getElementById('overlay').style.display = 'block';
-        document.getElementById('alert-box').style.display = 'block';
-    }
-
-    function closeAlert() {
-        window.location.href = window.location.pathname;
-    }
-
-    window.onload = init;
-</script>
-
-</body>
-</html>0
+    <button onclick="closeAlert()">存入
