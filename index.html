@@ -3,73 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> 警用終端機 </title>
+    <title>ZPD 終極偵查終端</title>
     <style>
-        :root { --zpd-blue: #0a2463; --zpd-dark: #020612; --zpd-gold: #fbaf00; --zpd-cyan: #00ebff; }
-        body { background: var(--zpd-dark); color: white; font-family: monospace; margin: 0; text-align: center; overflow-x: hidden; }
-        
-        /* 啟動畫面 */
-        #boot-screen { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: black; z-index: 999; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; cursor: pointer;
+        :root { --gold: #fbaf00; --cyan: #00ebff; --dark: #050a15; --blue: #0a2463; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; }
+
+        /* 啟動動畫畫面 */
+        #boot-screen {
+            position: fixed; inset: 0; background: black; z-index: 999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease;
         }
+        .loading-bar { width: 200px; height: 4px; background: #222; margin-top: 20px; border-radius: 2px; overflow: hidden; }
+        .loading-progress { width: 0%; height: 100%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); animation: load 1.5s forwards; }
+        @keyframes load { to { width: 100%; } }
 
-        #boot-title { 
-            color: var(--zpd-cyan); 
-            font-size: 28px; 
-            font-weight: bold; 
-            letter-spacing: 2px; 
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(0, 235, 255, 0.5);
+        /* 標題欄 */
+        .header { background: linear-gradient(to bottom, var(--blue), #000); padding: 20px; border-bottom: 3px solid var(--gold); }
+        .header h1 { margin: 0; font-size: 22px; color: var(--gold); letter-spacing: 2px; }
+        .header p { margin: 5px 0 0; font-size: 10px; opacity: 0.7; }
+
+        /* 進度條 */
+        .status-panel { padding: 15px; background: rgba(255,255,255,0.05); margin: 10px; border-radius: 8px; }
+        .progress-container { height: 10px; background: #111; border-radius: 5px; margin-top: 8px; border: 1px solid #333; }
+        #progress-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--cyan)); width: 0%; transition: 1s; }
+
+        /* 寶石網格 */
+        .gem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 15px; max-width: 500px; margin: auto; }
+        .gem-slot { 
+            aspect-ratio: 1; background: #080808; border: 2px solid #222; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; position: relative;
+            transition: 0.4s; grayscale: 100%; opacity: 0.4;
         }
+        .gem-slot.unlocked { 
+            border-color: var(--cyan); background: rgba(0, 235, 255, 0.05);
+            box-shadow: 0 0 15px rgba(0, 235, 255, 0.2); grayscale: 0%; opacity: 1;
+        }
+        .gem-slot img { width: 75%; height: 75%; object-fit: contain; }
+        .gem-label { position: absolute; bottom: 5px; font-size: 10px; color: #555; }
+        .unlocked .gem-label { color: var(--cyan); font-weight: bold; }
 
-        #boot-msg { font-size: 18px; color: #ccc; margin: 10px 0; }
-        #boot-hint { font-size: 14px; color: #666; margin-top: 40px; border: 1px solid #333; padding: 5px 15px; }
-
-        .header { background: var(--zpd-blue); padding: 15px; border-bottom: 4px solid var(--zpd-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .gem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px; max-width: 400px; margin: auto; }
-        .gem-slot { aspect-ratio: 1; border: 1px solid #333; border-radius: 8px; background: #080808; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        
-        .gem-icon { width: 80%; height: 80%; object-fit: contain; filter: grayscale(100%) brightness(30%); opacity: 0.3; transition: 0.5s; }
-        
-        .gem-slot.unlocked { border-color: var(--zpd-cyan); background: rgba(0, 235, 255, 0.1); box-shadow: inset 0 0 10px rgba(0, 235, 255, 0.3); }
-        .unlocked .gem-icon { filter: grayscale(0%) brightness(100%); opacity: 1; transform: scale(1.1); }
-
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; z-index: 100; }
-        #alert-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--zpd-blue); border: 2px solid var(--zpd-gold); padding: 20px; display: none; z-index: 101; width: 85%; max-width: 300px; border-radius: 10px; }
-        button { width: 100%; padding: 12px; background: var(--zpd-gold); border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 16px; color: black; }
+        /* 彈窗 */
+        #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; z-index: 1000; align-items: center; justify-content: center; }
+        #modal { background: var(--blue); border: 2px solid var(--gold); border-radius: 15px; width: 85%; max-width: 320px; padding: 25px; text-align: center; }
+        #modal h2 { color: var(--gold); margin: 0 0 15px; }
+        #modal p { line-height: 1.6; margin-bottom: 20px; }
+        #modal button { 
+            background: var(--gold); border: none; padding: 12px 30px; border-radius: 25px; 
+            font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; 
+        }
     </style>
 </head>
-<body onclick="forceCloseBoot()">
-
-<div id="boot-screen">
-    <div id="boot-title">[ ZPD PDT OS V3.5 ]</div>
-    <div id="boot-msg">正在驗證警員身份...</div>
-    <div id="boot-hint">點擊螢幕進入系統</div>
-</div>
-
-<div class="header">
-    <div style="font-size: 10px; letter-spacing: 1px;">ZOOTOPIA POLICE DEPT.</div>
-    <b style="color:var(--zpd-gold); font-size: 18px;">聖靈寶石偵查紀錄簿</b>
-</div>
-
-<div id="progress-text" style="padding:15px; color:var(--zpd-cyan); font-weight: bold; border-bottom: 1px solid #222;">案件進度: 0%</div>
-
-<div class="gem-grid">
-    <div id="slot-1" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/gem1.png"></div>
-    <div id="slot-2" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/gem2.png"></div>
-    <div id="slot-3" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/gem3.png"></div>
-    <div id="slot-4" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/gem4.png"></div>
-    <div id="slot-5" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/gem5.png"></div>
-    <div id="slot-6" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/gem6.png"></div>
-    <div id="slot-7" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/gem7.png"></div>
-    <div id="slot-8" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/gem8.png"></div>
-    <div id="slot-9" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/gem9.png"></div>
-</div>
-
-<div id="overlay"></div>
-<div id="alert-box">
-    <h3 id="alert-title" style="color:var(--zpd-gold); margin-top:0;">尋獲寶石</h3>
-    <p id="alert-body" style="font-size: 14px; line-height: 1.6; color: #eee;"></p>
-    <button onclick="closeAlert()">存入
