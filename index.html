@@ -42,4 +42,113 @@
         #alert-box { 
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             background: var(--zpd-blue); border: 2px solid var(--zpd-gold); 
-            padding:
+            padding: 25px; display: none; z-index: 101; width: 80%; 
+            max-width: 320px; border-radius: 20px; text-align: center;
+        }
+        
+        .btn-confirm { 
+            background: var(--zpd-gold); color: #000; border: none; padding: 14px; 
+            width: 100%; font-weight: bold; border-radius: 10px; margin-top: 20px; 
+            font-size: 18px; cursor: pointer; box-shadow: 0 4px 0 #b37d00;
+        }
+        .btn-confirm:active { transform: translateY(2px); box-shadow: 0 2px 0 #b37d00; }
+    </style>
+</head>
+<body onclick="closeBoot()">
+
+<div id="boot-screen">
+    <div style="color:var(--zpd-cyan); font-family: monospace; margin-bottom: 10px;">[ SYSTEM INITIALIZING ]</div>
+    <h2 style="margin:0;">ZPD 偵查終端</h2>
+    <p style="font-size: 12px; color: #666; margin-top: 30px;">點擊螢幕進行生物辨識</p>
+</div>
+
+<div class="header">
+    <div style="font-size: 10px; letter-spacing: 2px; opacity: 0.6;">ZOOTOPIA POLICE DEPT.</div>
+    <b style="color:var(--zpd-gold); font-size: 22px;">聖靈寶石紀錄簿</b>
+</div>
+
+<div class="progress-container">
+    <div style="font-size: 12px; color: var(--zpd-cyan); margin-bottom: 5px;">當前案件達成度</div>
+    <div id="prog-val" style="font-size: 32px; font-weight: bold;">0%</div>
+</div>
+
+<div class="gem-grid">
+    <div id="slot-1" class="gem-slot"><img class="gem-icon" src="gem=1.jpg"></div>
+    <div id="slot-2" class="gem-slot"><img class="gem-icon" src="gem=2.jpg"></div>
+    <div id="slot-3" class="gem-slot"><img class="gem-icon" src="gem=3.jpg"></div>
+    <div id="slot-4" class="gem-slot"><img class="gem-icon" src="gem=4.jpg"></div>
+    <div id="slot-5" class="gem-slot"><img class="gem-icon" src="gem=5.jpg"></div>
+    <div id="slot-6" class="gem-slot"><img class="gem-icon" src="gem=6.jpg"></div>
+    <div id="slot-7" class="gem-slot"><img class="gem-icon" src="gem=7.jpg"></div>
+    <div id="slot-8" class="gem-slot"><img class="gem-icon" src="gem=8.jpg"></div>
+    <div id="slot-9" class="gem-slot"><img class="gem-icon" src="gem=9.jpg"></div>
+</div>
+
+<div id="overlay"></div>
+<div id="alert-box">
+    <h2 id="atitle" style="color:var(--zpd-gold); margin-top:0;">尋獲證據</h2>
+    <p id="amsg" style="color:#fff; line-height: 1.6; font-size: 15px;"></p>
+    <button class="btn-confirm" onclick="finalizeCollection()">存入偵查系統</button>
+</div>
+
+<script>
+    const gemLibrary = {
+        '1': ['喜樂', '靠主常存喜樂，是強大的治癒力量。'],
+        '2': ['恩慈', '以良善之心待人，能化解所有仇恨。'],
+        '3': ['節制', '能掌管自己情緒的人，才是真正的強者。'],
+        '4': ['仁愛', '愛是所有品格中最強大的武裝。'],
+        '5': ['和平', '使人和睦的人，必稱為神的兒子。'],
+        '6': ['溫柔', '柔和的回答能輕易消退怒氣。'],
+        '7': ['忍耐', '在困境中學習等待，神必開路。'],
+        '8': ['信實', '誠實守信，是 ZPD 警員最高的人格指標。'],
+        '9': ['良善', '心存正直，堅持做神眼中看為正的事。']
+    };
+
+    function closeBoot() {
+        document.getElementById('boot-screen').style.display = 'none';
+    }
+
+    function init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const gemId = urlParams.get('gem');
+        
+        // V10 使用全新儲存空間，徹底清除舊版 Bug 影響
+        let collection = JSON.parse(localStorage.getItem('zpd_v10_final') || '[]');
+
+        if (gemId && gemLibrary[gemId]) {
+            if (!collection.includes(gemId)) {
+                collection.push(gemId);
+                localStorage.setItem('zpd_v10_final', JSON.stringify(collection));
+            }
+            // 延遲跳出彈窗，增加視覺儀式感
+            setTimeout(() => {
+                document.getElementById('atitle').innerText = "尋獲「" + gemLibrary[gemId][0] + "寶石」";
+                document.getElementById('amsg').innerText = gemLibrary[gemId][1];
+                document.getElementById('overlay').style.display = 'block';
+                document.getElementById('alert-box').style.display = 'block';
+                closeBoot(); 
+            }, 1000);
+        } else {
+            // 一般登入，2秒後自動進入系統
+            setTimeout(closeBoot, 2000);
+        }
+        refreshGrid(collection);
+    }
+
+    function refreshGrid(arr) {
+        arr.forEach(id => {
+            const slot = document.getElementById('slot-' + id);
+            if (slot) slot.classList.add('unlocked');
+        });
+        document.getElementById('prog-val').innerText = Math.floor((arr.length/9)*100) + "%";
+    }
+
+    function finalizeCollection() {
+        // 清除網址參數，避免刷新時重複跳出彈窗
+        window.location.href = window.location.pathname;
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
