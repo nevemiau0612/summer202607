@@ -2,101 +2,44 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZPD 警用終端機 V4.5</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZPD 聖靈寶石終端機 V10</title>
     <style>
         :root { --zpd-blue: #0a2463; --zpd-dark: #020612; --zpd-gold: #fbaf00; --zpd-cyan: #00ebff; }
-        body { background: var(--zpd-dark); color: white; font-family: 'Courier New', monospace; margin: 0; text-align: center; }
-        #boot-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 999; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer; }
-        .header { background: var(--zpd-blue); padding: 15px; border-bottom: 4px solid var(--zpd-gold); }
+        body { background: var(--zpd-dark); color: white; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; text-align: center; overflow-x: hidden; }
+        
+        /* 啟動黑畫面：防呆設計，點擊任何處進入 */
+        #boot-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: black; z-index: 999; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        .header { background: var(--zpd-blue); padding: 15px; border-bottom: 4px solid var(--zpd-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .progress-container { padding: 15px; background: rgba(0, 235, 255, 0.05); border-bottom: 1px solid #222; }
+        
+        /* 寶石網格 */
         .gem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px; max-width: 400px; margin: auto; }
-        .gem-slot { aspect-ratio: 1; border: 1px solid #333; border-radius: 8px; background: #080808; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        
-        /* JPG 圖片預設樣式：未解鎖時非常暗 */
-        .gem-icon { width: 90%; height: 90%; object-fit: contain; filter: brightness(10%) grayscale(100%); opacity: 0.2; transition: 0.8s ease; }
-        
-        /* 解鎖樣式：恢復彩色與亮度 */
-        .gem-slot.unlocked { border-color: var(--zpd-cyan); background: rgba(0, 235, 255, 0.1); box-shadow: 0 0 15px rgba(0, 235, 255, 0.3); }
-        .unlocked .gem-icon { filter: brightness(100%) grayscale(0%); opacity: 1; transform: scale(1.05); }
-
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; z-index: 100; backdrop-filter: blur(3px); }
-        #alert-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--zpd-blue); border: 2px solid var(--zpd-gold); padding: 20px; display: none; z-index: 101; width: 85%; max-width: 300px; border-radius: 12px; }
-        button { width: 100%; padding: 12px; background: var(--zpd-gold); border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 16px; color: #000; }
-    </style>
-</head>
-<body onclick="document.getElementById('boot-screen').style.display='none'">
-
-<div id="boot-screen">
-    <p style="color:var(--zpd-cyan); font-weight: bold; letter-spacing: 2px;">[ ZPD_OS_V4.5_FINAL ]</p>
-    <p id="boot-msg">系統核心同步中...</p>
-    <p style="font-size: 10px; color: #444; margin-top: 20px;">( 驗證失敗請點擊螢幕強制進入 )</p>
-</div>
-
-<div class="header">
-    <div style="font-size: 10px; opacity: 0.7; letter-spacing: 1px;">ZOOTOPIA POLICE DEPT.</div>
-    <b style="color:var(--zpd-gold); font-size: 18px;">聖靈寶石偵查終端</b>
-</div>
-
-<div id="progress-text" style="padding:15px; color:var(--zpd-cyan); font-weight: bold; border-bottom: 1px solid #1a1a1a;">案件偵破進度: 0%</div>
-
-<div class="gem-grid">
-    <div id="slot-1" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem1.jpg"></div>
-    <div id="slot-2" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem2.jpg"></div>
-    <div id="slot-3" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem3.jpg"></div>
-    <div id="slot-4" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem4.jpg"></div>
-    <div id="slot-5" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem5.jpg"></div>
-    <div id="slot-6" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem6.jpg"></div>
-    <div id="slot-7" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem7.jpg"></div>
-    <div id="slot-8" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem8.jpg"></div>
-    <div id="slot-9" class="gem-slot"><img class="gem-icon" src="https://nevemiau0612.github.io/summer202607/images/gem9.jpg"></div>
-</div>
-
-<div id="overlay"></div>
-<div id="alert-box">
-    <h3 id="atitle" style="color:var(--zpd-gold); margin-top:0;">尋獲寶石</h3>
-    <p id="amsg" style="font-size: 14px; line-height: 1.6; color: #eee;"></p>
-    <button onclick="window.location.href=window.location.pathname">確認存入系統</button>
-</div>
-
-<script>
-    const gData = {
-        '1':['喜樂','靠主常存喜樂，是健康的良藥。'], '2':['恩慈','良善的心能化解一切仇恨。'],
-        '3':['節制','能掌管情緒的人才是真正強者。'], '4':['仁愛','愛是所有品格中最偉大的力量。'],
-        '5':['和平','使人和睦的人，必稱為神的兒子。'], '6':['溫柔','柔和的回答能消退怒氣。'],
-        '7':['忍耐','在困境中學習等待，神必開路。'], '8':['信實','誠實守信是警員最珍貴的品格。'],
-        '9':['良善','心存正直，行神眼中看為正的事。']
-    };
-
-    function init() {
-        const p = new URLSearchParams(window.location.search);
-        const id = p.get('gem');
-        
-        // 變更儲存 Key 確保強制重整
-        let s = JSON.parse(localStorage.getItem('zpd_storage_final_jpg') || '[]');
-
-        if (id && gData[id]) {
-            if (!s.includes(id)) {
-                s.push(id);
-                localStorage.setItem('zpd_storage_final_jpg', JSON.stringify(s));
-            }
-            setTimeout(() => {
-                document.getElementById('atitle').innerText = "尋獲：" + gData[id][0];
-                document.getElementById('amsg').innerText = gData[id][1];
-                document.getElementById('overlay').style.display = 'block';
-                document.getElementById('alert-box').style.display = 'block';
-                document.getElementById('boot-screen').style.display = 'none';
-            }, 1200);
-        } else {
-            setTimeout(() => document.getElementById('boot-screen').style.display='none', 2000);
+        .gem-slot { 
+            aspect-ratio: 1; border: 2px solid #333; border-radius: 12px; 
+            background: #050505; display: flex; align-items: center; 
+            justify-content: center; overflow: hidden; position: relative;
         }
         
-        s.forEach(i => {
-            const el = document.getElementById('slot-' + i);
-            if(el) el.classList.add('unlocked');
-        });
-        document.getElementById('progress-text').innerText = "案件偵破進度: " + Math.floor((s.length/9)*100) + "%";
-    }
-    window.onload = init;
-</script>
-</body>
-</html>
+        /* JPG 專用濾鏡：未解鎖時呈現暗灰色剪影 */
+        .gem-icon { 
+            width: 85%; height: 85%; object-fit: contain; 
+            filter: brightness(10%) grayscale(100%); opacity: 0.15; 
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        
+        /* 解鎖樣式：恢復彩色、發光與放大 */
+        .gem-slot.unlocked { border-color: var(--zpd-cyan); background: rgba(0, 235, 255, 0.1); box-shadow: 0 0 15px rgba(0, 235, 255, 0.4); }
+        .unlocked .gem-icon { filter: brightness(100%) grayscale(0%); opacity: 1; transform: scale(1.1); }
+
+        /* 領取彈窗 */
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; z-index: 100; backdrop-filter: blur(5px); }
+        #alert-box { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: var(--zpd-blue); border: 2px solid var(--zpd-gold); 
+            padding:
