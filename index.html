@@ -3,89 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZPD 終查終端 V7.5</title>
+    <title>ZPD 終查終端 V8</title>
     <style>
-        :root { 
-            --gold: #fbaf00; --cyan: #00ebff; --dark: #020612; --blue: #0a2463; 
-        }
+        :root { --gold: #fbaf00; --cyan: #00ebff; --dark: #020612; --blue: #0a2463; }
         * { box-sizing: border-box; font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; }
-        body { background: var(--dark); color: white; margin: 0; text-align: center; line-height: 1.5; }
+        body { background: var(--dark); color: white; margin: 0; text-align: center; }
 
         /* 啟動畫面 */
         #boot-screen {
             position: fixed; inset: 0; background: #000; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .boot-title { font-size: 24px; font-weight: bold; margin-bottom: 30px; color: white; }
         .start-btn {
             background: var(--blue); border: 2px solid var(--cyan); color: var(--cyan);
             padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 50px;
             cursor: pointer; box-shadow: 0 0 15px rgba(0,235,255,0.3);
         }
 
-        /* 頂部標題列 (統一字體大小) */
+        /* 統一字體大小的標題與進度 */
         .header { background: var(--blue); padding: 20px; border-bottom: 3px solid var(--gold); }
-        .header h1 { margin: 0; font-size: 20px; color: var(--gold); letter-spacing: 1px; }
+        .header h1 { margin: 0; font-size: 20px; color: var(--gold); }
 
-        /* 進度面板 (統一字體大小) */
         .status-box { padding: 20px; background: rgba(255,255,255,0.03); border-bottom: 1px solid #222; }
         .status-text { display: flex; justify-content: space-between; font-size: 15px; color: #aaa; margin-bottom: 8px; }
         .bar-bg { height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #333; }
-        #bar-fill { height: 100%; width: 0%; background: var(--cyan); transition: 0.8s ease-out; }
+        #bar-fill { height: 100%; width: 0%; background: var(--cyan); transition: 0.5s; }
 
-        /* 寶石網格 */
-        .grid { 
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; 
-            padding: 20px; max-width: 420px; margin: auto; 
-        }
+        /* 網格系統 */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px; max-width: 420px; margin: auto; }
         .slot { 
             aspect-ratio: 1; background: #080808; border: 1px solid #333; border-radius: 10px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            opacity: 0.2; filter: grayscale(1); transition: 0.4s;
+            opacity: 0.15; filter: grayscale(1); transition: 0.3s;
         }
         .slot.active { opacity: 1; filter: grayscale(0); border-color: var(--cyan); background: rgba(0,235,255,0.05); }
-        .slot img { width: 65%; height: 65%; object-fit: contain; }
-        .slot span { font-size: 15px; margin-top: 8px; color: #555; }
+        .slot img { width: 60%; height: 60%; object-fit: contain; }
+        .slot span { font-size: 15px; margin-top: 8px; color: #444; }
         .active span { color: var(--cyan); font-weight: bold; }
 
-        /* 彈窗介面 (統一字體大小) */
-        #pop-overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); 
-            display: none; z-index: 1000; align-items: center; justify-content: center; 
-        }
-        .pop-card { 
-            background: var(--blue); border: 2px solid var(--gold); 
-            width: 85%; max-width: 320px; padding: 25px; border-radius: 20px; 
-        }
+        /* 彈窗 */
+        #pop-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; z-index: 1000; align-items: center; justify-content: center; }
+        .pop-card { background: var(--blue); border: 2px solid var(--gold); width: 85%; max-width: 320px; padding: 25px; border-radius: 20px; }
         .pop-card h2 { color: var(--gold); margin: 0 0 15px; font-size: 20px; }
         .pop-card p { font-size: 15px; line-height: 1.6; color: #eee; margin-bottom: 20px; }
-        .pop-card button { 
-            width: 100%; padding: 12px; background: var(--gold); border: none; 
-            border-radius: 8px; font-weight: bold; font-size: 15px; color: #000;
-        }
+        .pop-card button { width: 100%; padding: 12px; background: var(--gold); border: none; border-radius: 8px; font-weight: bold; font-size: 15px; }
     </style>
 </head>
 <body>
 
 <div id="boot-screen">
-    <div class="boot-title">ZPD 身份驗證完畢</div>
-    <button class="start-btn" onclick="startSystem()">啟動偵查終端機</button>
+    <div style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">ZPD 身份驗證</div>
+    <button class="start-btn" onclick="startSystem()">啟動紀錄簿</button>
 </div>
 
-<div class="header">
-    <h1>聖靈寶石偵查紀錄簿</h1>
-</div>
+<div class="header"><h1>聖靈寶石偵查紀錄簿</h1></div>
 
 <div class="status-box">
-    <div class="status-text">
-        <span>案件收集進度</span>
-        <span id="prog-text">0%</span>
-    </div>
+    <div class="status-text"><span>收集進度</span><span id="prog-text">0%</span></div>
     <div class="bar-bg"><div id="bar-fill"></div></div>
 </div>
 
-<div class="grid" id="main-grid">
-    </div>
+<div class="grid" id="main-grid"></div>
 
 <div id="pop-overlay">
     <div class="pop-card">
@@ -97,4 +75,77 @@
 
 <script>
     const GEMS = {
-        '1': { n: '喜樂', m: '靠主常存喜樂，是健康的
+        '1': { n: '喜樂', m: '靠主常存喜樂，是健康的良藥。' },
+        '2': { n: '恩慈', m: '良善的心能化解一切仇恨。' },
+        '3': { n: '節制', m: '能掌管情緒的人才是真正強者。' },
+        '4': { n: '仁愛', m: '愛是所有品格中最偉大的力量。' },
+        '5': { n: '和平', m: '使人和睦的人，必稱為神的兒子。' },
+        '6': { n: '溫柔', m: '柔和的回答能消退怒氣。' },
+        '7': { n: '忍耐', m: '在困境中學習等待，神必開路。' },
+        '8': { n: '信實', m: '誠實守信是警員最珍貴的品格。' },
+        '9': { n: '良善', m: '心存正直，行神眼中看為正的事。' }
+    };
+
+    const KEY = 'ZPD_STABLE_DATA_V8';
+    const IMG_URL = 'https://nevemiau0612.github.io/summer202607/gem';
+
+    function startSystem() {
+        document.getElementById('boot-screen').style.display = 'none';
+        
+        // 1. 讀取並檢查 URL
+        const params = new URLSearchParams(window.location.search);
+        const gemId = params.get('gem');
+        let saved = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+        if (gemId && GEMS[gemId]) {
+            // 強制轉字串並存入
+            const idStr = String(gemId);
+            if (!saved.includes(idStr)) {
+                saved.push(idStr);
+                localStorage.setItem(KEY, JSON.stringify(saved));
+            }
+            showPop(idStr);
+            // 變更網址但不刷新
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
+        // 2. 渲染 UI
+        updateUI(saved);
+    }
+
+    function updateUI(saved) {
+        const grid = document.getElementById('main-grid');
+        grid.innerHTML = '';
+        for (let i = 1; i <= 9; i++) {
+            const active = saved.includes(String(i));
+            grid.innerHTML += `
+                <div class="slot ${active ? 'active' : ''}">
+                    <img src="${IMG_URL}${i}.png">
+                    <span>${GEMS[i].n}</span>
+                </div>
+            `;
+        }
+        const p = Math.floor((saved.length / 9) * 100);
+        document.getElementById('prog-text').innerText = p + "%";
+        document.getElementById('bar-fill').style.width = p + "%";
+    }
+
+    function showPop(id) {
+        document.getElementById('p-title').innerText = "尋獲：" + GEMS[id].n + "寶石";
+        document.getElementById('p-body').innerText = GEMS[id].m;
+        document.getElementById('pop-overlay').style.display = 'flex';
+    }
+
+    function closePop() {
+        document.getElementById('pop-overlay').style.display = 'none';
+    }
+
+    // 初始化：先渲染一遍現有資料
+    window.onload = () => {
+        const saved = JSON.parse(localStorage.getItem(KEY) || '[]');
+        updateUI(saved);
+    };
+</script>
+
+</body>
+</html>
