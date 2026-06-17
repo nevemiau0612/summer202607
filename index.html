@@ -11,6 +11,19 @@
     <!-- 設定手機版網頁主題顏色 -->
     <meta name="theme-color" content="#000000">
 
+    <!-- 1. 告訴 iOS 允許將此網頁當作獨立 App 執行（隱藏網址列） -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <!-- 2. 指定 iOS 桌面圖示 -->
+    <link rel="apple-touch-icon" href="images/app_icon.png">
+
+    <!-- 3. 設定 App 頂部狀態列（電量、時間那一欄）的顏色 -->
+    <!-- 可選值: default (白色) / black (黑色) / black-translucent (半透明) -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- 4. 設定在 iOS 桌面顯示的 App 標題（若不寫，預設會抓 <title>） -->
+    <meta name="apple-mobile-web-app-title" content="ZPD 聖靈寶石終端機 V10">
+
     <style>
         :root { --zpd-blue: #0a2463; --zpd-dark: #020612; --zpd-gold: #fbaf00; --zpd-cyan: #00ebff; }
         body { background: var(--zpd-dark); color: white; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; text-align: center; overflow-x: hidden; }
