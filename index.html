@@ -139,7 +139,11 @@
     }
 
     function init() {
-        const urlParams = new URLSearchParams(window.location.search);
+        parseUrl(window.location);
+    }
+
+    function parseUrl(fullUrl) {
+        const urlParams = new URLSearchParams(fullUrl.search);
         const gemId = urlParams.get('gem');
         
         // V10 使用全新儲存空間，徹底清除舊版 Bug 影響
@@ -176,6 +180,38 @@
     function finalizeCollection() {
         // 清除網址參數，避免刷新時重複跳出彈窗
         window.location.href = window.location.pathname;
+    }
+
+    // 處理scheme轉導
+    // 現代 PWA 專用的單一實例啟動監聽器
+    if ('launchQueue' in window) {
+        window.launchQueue.setConsumer((launchParams) => {
+            // 如果沒有觸發網址，就只是普通打開 App，直接結束
+            if (!launchParams.targetURL) return;
+
+            // 1. 取得觸發 PWA 的完整線上網址
+            const activeUrl = new URL(launchParams.targetURL);
+
+            // 2. 從網址中解析出我們的 Scheme 參數 (value)
+            const rawUrl = activeUrl.searchParams.get('value');
+
+            if (rawUrl) {
+                const decodedUrl = decodeURIComponent(rawUrl);
+                console.log("App 已開著！接收到新協議網址：", decodedUrl);
+
+                // 3. 觸發您的 Callback 函數
+                parseUrl(decodedUrl);
+            }
+        });
+    } else {
+        // 備用方案：如果瀏覽器太舊不支援 launchQueue，用原本的方式當墊底
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const rawUrl = urlParams.get('value');
+            if (rawUrl) {
+                parseUrl(decodeURIComponent(rawUrl));
+            }
+        });
     }
 
     window.onload = init;
