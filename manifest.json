@@ -1,7 +1,7 @@
 {
   "name": "summer202607_prj",
   "short_name": "summer",
-  "start_url": "index.html",
+  "start_url": "/summer202607/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
@@ -15,7 +15,7 @@
   "protocol_handlers": [
     {
       "protocol": "web+summer",
-      "url": "./index.html?value=%s"
+      "url": "/summer202607/index.html?value=%s"
     }
   ],
   "launch_handler": {
